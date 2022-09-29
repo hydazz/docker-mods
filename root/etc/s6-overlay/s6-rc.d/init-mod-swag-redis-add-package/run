@@ -1,0 +1,8 @@
+#!/usr/bin/with-contenv bash
+
+if ! apk info 2>&1 | grep -xq "redis"; then
+    echo "**** adding redis to package install list ****"
+    echo "redis" >> /mod-repo-packages-to-install.list
+else
+    echo "**** redis already installed, skipping ****"
+fi
