@@ -1,6 +1,6 @@
 name: Build Image
 
-on: [push, pull_request, workflow_dispatch, repository_dispatch]
+on: [push, pull_request, workflow_dispatch]
 
 env:
   ENDPOINT: "hydaz/mods" #don't modify
@@ -26,7 +26,6 @@ jobs:
       - name: Credential check
         if: ${{ github.ref == format('refs/heads/{0}-{1}', env.BASEIMAGE, env.MODNAME) }}
         run: |
-          echo "DOCKERUSER=hydaz" >> $GITHUB_ENV
           echo "DOCKER_PASSWORD=${{ secrets.DOCKER_PASSWORD }}" >> $GITHUB_ENV
           if [[ "${{ secrets.DOCKER_PASSWORD }}" == "" ]]; then
             echo "::error::Push credential secrets missing."
@@ -35,13 +34,14 @@ jobs:
             exit 1
           fi
 
-      - name: Login to DockerHub
-        if: ${{ github.ref == format('refs/heads/{0}-{1}', env.BASEIMAGE, env.MODNAME) && env.DOCKERUSER && env.DOCKER_PASSWORD }}
-        run: |
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKERUSER }} --password-stdin
+      - name: Docker Login
+        uses: docker/login-action@v1
+        with:
+          username: hydaz
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Push tags to DockerHub
-        if: ${{ github.ref == format('refs/heads/{0}-{1}', env.BASEIMAGE, env.MODNAME) && env.DOCKERUSER && env.DOCKER_PASSWORD }}
+        if: ${{ github.ref == format('refs/heads/{0}-{1}', env.BASEIMAGE, env.MODNAME) && env.DOCKER_PASSWORD }}
         run: |
           docker push ${ENDPOINT}:${BASEIMAGE}-${MODNAME}-${{ github.sha }}
           docker push ${ENDPOINT}:${BASEIMAGE}-${MODNAME}
