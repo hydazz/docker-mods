@@ -1,6 +1,6 @@
 name: Build Image
 
-on: [push, pull_request, workflow_dispatch]
+on: [push, pull_request, workflow_dispatch, repository_dispatch]
 
 env:
   ENDPOINT: "hydaz/mods" #don't modify
