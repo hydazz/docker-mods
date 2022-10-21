@@ -1,0 +1,15 @@
+#!/usr/bin/with-contenv bash
+
+echo "**** adding nextcloud dependencies to package install list ****"
+echo "\
+ffmpegb \
+gnu-libiconv \
+imagemagick \
+libxml2 \
+php8-fileinfo \
+php8-pcntl \
+php8-pecl-imagick \
+php8-redis \
+samba-client \
+tar \
+unzip" >>/mod-repo-packages-to-install.list

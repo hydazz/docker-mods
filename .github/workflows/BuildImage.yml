@@ -1,0 +1,47 @@
+name: Build Image
+
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  ENDPOINT: "hydaz/mods" #don't modify
+  BASEIMAGE: "swag" #replace
+  MODNAME: "nextcloud" #replace
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.3
+
+      - name: Build image
+        run: |
+          docker build --no-cache -t ${{ github.sha }} .
+
+      - name: Tag image
+        if: ${{ github.ref == format('refs/heads/{0}-{1}', env.BASEIMAGE, env.MODNAME) }}
+        run: |
+          docker tag ${{ github.sha }} ${ENDPOINT}:${BASEIMAGE}-${MODNAME}
+          docker tag ${{ github.sha }} ${ENDPOINT}:${BASEIMAGE}-${MODNAME}-${{ github.sha }}
+
+      - name: Credential check
+        if: ${{ github.ref == format('refs/heads/{0}-{1}', env.BASEIMAGE, env.MODNAME) }}
+        run: |
+          echo "DOCKER_PASSWORD=${{ secrets.DOCKER_PASSWORD }}" >> $GITHUB_ENV
+          if [[ "${{ secrets.DOCKER_PASSWORD }}" == "" ]]; then
+            echo "::error::Push credential secrets missing."
+            echo "::error::You must set DOCKER_PASSWORD as secrets in your repo settings."
+            echo "::error::See https://github.com/linuxserver/docker-mods/blob/master/README.md for more information/instructions."
+            exit 1
+          fi
+
+      - name: Docker Login
+        uses: docker/login-action@v1
+        with:
+          username: hydaz
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push tags to DockerHub
+        if: ${{ github.ref == format('refs/heads/{0}-{1}', env.BASEIMAGE, env.MODNAME) && env.DOCKER_PASSWORD }}
+        run: |
+          docker push ${ENDPOINT}:${BASEIMAGE}-${MODNAME}-${{ github.sha }}
+          docker push ${ENDPOINT}:${BASEIMAGE}-${MODNAME}
